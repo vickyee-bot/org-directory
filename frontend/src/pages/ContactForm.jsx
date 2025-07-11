@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function ContactForm() {
-  const { orgId, id } = useParams(); // orgId for new, id for edit
+  const { orgId, id } = useParams(); // orgId for create, id for edit
   const navigate = useNavigate();
   const [contact, setContact] = useState({
     firstName: "",
@@ -16,6 +16,7 @@ export default function ContactForm() {
     notes: "",
     isPrimaryContact: false,
   });
+  const [organizationId, setOrganizationId] = useState(orgId || ""); // fallback for edit
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function ContactForm() {
       const res = await fetch(`http://localhost:3001/contacts/${id}`);
       const data = await res.json();
       setContact(data);
+      setOrganizationId(data.organizationId); // capture organizationId from fetched contact
     } catch (err) {
       console.error("Failed to load contact", err);
     }
@@ -56,7 +58,13 @@ export default function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact),
       });
-      navigate(`/organizations/${orgId}/contacts`);
+
+      // Redirect logic:
+      if (organizationId) {
+        navigate(`/organizations/${organizationId}/contacts`);
+      } else {
+        navigate("/contacts");
+      }
     } catch (err) {
       console.error("Failed to save contact", err);
     }
@@ -70,6 +78,7 @@ export default function ContactForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* form fields */}
         <div>
           <label className="block">First Name *</label>
           <input
